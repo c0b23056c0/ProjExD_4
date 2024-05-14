@@ -134,21 +134,21 @@ class Bomb(pg.sprite.Sprite):
         """
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
-            self.kill()
+            self.kill() # 画面外にでたらGroupオブジェクトから消去される
 
 
 class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, angle0 = 0):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
         """
         super().__init__()
         self.vx, self.vy = bird.dire
-        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle = math.degrees(math.atan2(-self.vy, self.vx)) + angle0
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -223,6 +223,17 @@ class Enemy(pg.sprite.Sprite):
         self.rect.centery += self.vy
 
 
+#追加機能6
+class NeoBeam:
+    def __init__(self, bird, num:int):
+        self.num = num
+        self.bird = bird
+    
+    def gen_beams(self):
+        #複数ビームの角度
+        return [Beam(self.bird, angle) for angle in range(-50, +51, int(100/(self.num - 1)))]
+
+
 class Score:
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
@@ -255,6 +266,10 @@ def main():
     emys = pg.sprite.Group()
 
     tmr = 0
+    #追加機能6
+    num = 5
+    angle = 0
+    #
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
