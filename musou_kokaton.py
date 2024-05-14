@@ -234,6 +234,21 @@ class NeoBeam:
         return [Beam(self.bird, angle) for angle in range(-50, +51, int(100/(self.num - 1)))]
 
 
+class Gravity(pg.sprite.Sprite):
+    def __init__(self, life):
+        super().__init__()
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(self.image, (0, 0, 0),(0, 0, 1600, 900))
+        self.image.set_alpha(100)
+        self.rect = self.image.get_rect()
+        self.time = life
+
+    def update(self):
+        self.time -= 1
+        if 0 > self.time:
+            self.kill()
+
+
 class Score:
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
@@ -264,6 +279,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    gras = pg.sprite.Group()
 
     tmr = 0
     #追加機能6
@@ -286,6 +302,8 @@ def main():
                 bird.speed = 20
             else:
                 bird.speed = 10
+            if event.type == pg.KEYDOWN and event.key == pg.K_g:
+                gras.add(Gravity(400))
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -305,6 +323,15 @@ def main():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
 
+        
+        for emy in pg.sprite.groupcollide(emys, gras, True, False).keys():
+            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+
+
+        for bomb in pg.sprite.groupcollide(bombs, gras, True, False).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+
+
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
@@ -322,6 +349,8 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        gras.update()
+        gras.draw(screen)
         pg.display.update()
         tmr += 1
         clock.tick(50)
