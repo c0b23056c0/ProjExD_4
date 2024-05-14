@@ -71,6 +71,8 @@ class Bird(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = xy
         self.speed = 10
+        self.state = "normal"
+        self.hyper_life = -1
 
 
     def change_img(self, num: int, screen: pg.Surface):
@@ -99,6 +101,8 @@ class Bird(pg.sprite.Sprite):
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
+        if self.state == "hyper":
+            self.image = pg.transform.laplacian(self.image)
         screen.blit(self.image, self.rect)
 
 
@@ -294,6 +298,11 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT:
+                if score.value >= 100:
+                    bird.state = "hyper"
+                    bird.hyper_life = 500
+                    score.value -= 100
             #追加機能6
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE and key_lst[pg.K_LSHIFT]:
                 beams.add(NeoBeam(bird, num).gen_beams())
@@ -302,6 +311,7 @@ def main():
                 bird.speed = 20
             else:
                 bird.speed = 10
+
             if event.type == pg.KEYDOWN and event.key == pg.K_g:
                 gras.add(Gravity(400))
         screen.blit(bg_img, [0, 0])
@@ -322,6 +332,19 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
+        if bird.state == "normal":
+            if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+                bird.change_img(8, screen) # こうかとん悲しみエフェクト
+                score.update(screen)
+                pg.display.update()
+                time.sleep(2)
+                return
+        elif bird.state == "hyper":
+            if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+                for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
+                    exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+                score.value += 1  # 1点アップ
+
 
         
         for emy in pg.sprite.groupcollide(emys, gras, True, False).keys():
@@ -352,6 +375,9 @@ def main():
         gras.update()
         gras.draw(screen)
         pg.display.update()
+        bird.hyper_life -= 1
+        if bird.hyper_life < 0:
+            bird.state = "normal"
         tmr += 1
         clock.tick(50)
 
