@@ -133,7 +133,7 @@ class Bomb(pg.sprite.Sprite):
         """
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
-            self.kill()
+            self.kill() # 画面外にでたらGroupオブジェクトから消去される
 
 
 class Beam(pg.sprite.Sprite):
@@ -151,6 +151,9 @@ class Beam(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
+        #追加機能6
+        angle0 = 0
+        #
         self.rect = self.image.get_rect()
         self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
         self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
@@ -222,6 +225,19 @@ class Enemy(pg.sprite.Sprite):
         self.rect.centery += self.vy
 
 
+#追加機能6
+class NeoBeam:
+    def __init__(self, bird, num):
+        self.num = num
+        self.bird = bird
+        self.beam_lst = []
+    
+    def gen_beams(self):
+        for _ in self.num:
+            self.beam_lst.append(Beam(self.bird))
+        return self.beam_lst
+
+
 class Score:
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
@@ -254,6 +270,9 @@ def main():
     emys = pg.sprite.Group()
 
     tmr = 0
+    #追加機能6
+    num = 5
+    #
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
@@ -262,6 +281,11 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            #追加機能6
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE and event.key == pg.K_LSHIFT:
+                beams.add(NeoBeam(bird, num))
+            #
+        
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
